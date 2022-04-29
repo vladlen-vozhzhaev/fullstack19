@@ -14,7 +14,7 @@
     <div class="container">
         <h1 class="my-5 text-center">Регистрация на сайте</h1>
         <div class="col-5 mx-auto">
-            <form action="http://localhost:3000" method="post">
+            <form onsubmit="sendForm(this); return false;">
                 <div class="mb-3">
                     <input name="name" type="text" class="form-control" placeholder="Имя">
                 </div>
@@ -37,7 +37,14 @@
     <script>
         //onsubmit="sendForm(this); return false;"
         function sendForm(form){
-            let formData = new FormData(form);
+            const formData = new FormData(form);
+            fetch('/reg', {
+                method: "post",
+                body: formData
+            }).then(response => response.text())
+            .then(result=>{
+                console.log(result);
+            })
         }
     </script>
 </body>
