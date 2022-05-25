@@ -1,3 +1,4 @@
+const { parse } = require('node-html-parser');
 const express = require('express');
 const session = require('express-session')
 const HmacSHA256 = require('crypto-js/hmac-sha256');
@@ -5,6 +6,8 @@ const mysql = require("mysql2");
 const multer = require("multer");
 const cookieParser = require('cookie-parser');
 const {engine} = require('express-handlebars');
+const uuid = require('uuid');
+const fs = require('fs');
 const app = express()
 const port = 3000
 app.use(cookieParser('secret key'))
@@ -34,12 +37,21 @@ app.get('/', (req, res) => {
 });
 app.get('/cabinet', (req, res) => {
     console.log('Cookie: ', req.cookies['token']);
-    if(req.cookies['token'] === '12345ABCDE'){
-        res.send('Личный кабинет');
-    }else{
-        res.send('Доступ запрещен');
-    }
-
+    let token = req.cookies['token']==null?undefined:req.cookies['token'];
+    connection.query("SELECT * FROM users WHERE token=?",
+        [token], function (err, result){
+            console.log(result);
+            if(result.length){
+                let user = {
+                    name: result[0].name,
+                    lastname: result[0].lastname,
+                    email: result[0].email
+                }
+                res.render('cabinet', {user});
+            }else{
+                res.send('Доступ запрещен');
+            }
+        })
 });
 app.get('/reg', (req, res)=>{
     res.sendFile(__dirname + "/reg.html")
@@ -76,7 +88,10 @@ app.post('/login', multer().fields([]), (req,res )=>{
         if(res1.length){
             let pass = (HmacSHA256(req.body.pass, 'secret').toString());
             if(pass === res1[0].pass){
-                res.cookie('token', '12345ABCDE');
+                let uid = uuid.v4();
+                connection.query("UPDATE users SET token = ? WHERE id = ?",
+                    [uid, res1[0].id]);
+                res.cookie('token', uid);
                 res.send("success");
             }else {
                 res.send("error");
@@ -93,6 +108,25 @@ app.get('/logout', (req, res)=>{
     res.send('success');
 });
 
+app.get('/addArticle', (req, res)=>{
+    res.render('addArticle', {});
+});
+
+app.post('/addArticle', multer().fields([]), (req, res)=> {
+    const root = parse(req.body.content);
+    let imageBase64 = root.querySelector("img").getAttribute('src');
+    let imageName = Date.now()+"."+imageBase64.split(",")[0].split("/")[1].split(";")[0];
+    let buff = new Buffer(imageBase64.split(",")[1], 'base64');
+    fs.writeFileSync(`public/img/contentImage/${imageName}`, buff);
+    root.querySelector("img").setAttribute("src", `/img/contentImage/${imageName}`);
+    console.log(root.toString());
+    res.json({result: "success"});
+   /* connection.query("INSERT INTO articles (title, content, author) VALUES (?,?,?)",
+        [req.body.title, req.body.content, req.body.author],
+        () => {
+            res.json({result: "success"});
+        });*/
+});
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 })
