@@ -1,17 +1,18 @@
-const { parse } = require('node-html-parser');
-const express = require('express');
-const session = require('express-session')
-const HmacSHA256 = require('crypto-js/hmac-sha256');
-const mysql = require("mysql2");
-const multer = require("multer");
-const cookieParser = require('cookie-parser');
-const {engine} = require('express-handlebars');
-const uuid = require('uuid');
-const fs = require('fs');
+import { parse } from 'node-html-parser';
+import express from 'express';
+import HmacSHA256 from 'crypto-js/hmac-sha256.js';
+import mysql from "mysql2";
+import multer from "multer";
+import cookieParser from 'cookie-parser';
+import {engine} from 'express-handlebars';
+import {v4} from 'uuid';
+import path from "path";
+import fs from 'fs';
+import {Blog} from 'controllers/Blog.js'
 const app = express()
 const port = 3000
 app.use(cookieParser('secret key'))
-app.use(express.static(`${__dirname}/public`));
+app.use(express.static(`/public`));
 app.engine('handlebars', engine());
 app.set('views', './views')
 app.set('view engine', 'handlebars')
@@ -114,19 +115,32 @@ app.get('/addArticle', (req, res)=>{
 
 app.post('/addArticle', multer().fields([]), (req, res)=> {
     const root = parse(req.body.content);
-    let imageBase64 = root.querySelector("img").getAttribute('src');
-    let imageName = Date.now()+"."+imageBase64.split(",")[0].split("/")[1].split(";")[0];
-    let buff = new Buffer(imageBase64.split(",")[1], 'base64');
-    fs.writeFileSync(`public/img/contentImage/${imageName}`, buff);
-    root.querySelector("img").setAttribute("src", `/img/contentImage/${imageName}`);
+    let images = root.querySelectorAll("img");
+    images.forEach((image, index)=>{
+        let base64 = image.getAttribute('src');
+        let imageName = Date.now()+"."+base64.split(",")[0].split("/")[1].split(";")[0];
+        let buff = new Buffer(base64.split(",")[1], 'base64');
+        fs.writeFileSync(`public/img/contentImage/${imageName}`, buff);
+        root.querySelectorAll("img")[index].setAttribute("src", `/img/contentImage/${imageName}`);
+    })
     console.log(root.toString());
-    res.json({result: "success"});
-   /* connection.query("INSERT INTO articles (title, content, author) VALUES (?,?,?)",
-        [req.body.title, req.body.content, req.body.author],
+    connection.query("INSERT INTO articles (title, content, author) VALUES (?,?,?)",
+        [req.body.title, root.toString(), req.body.author],
         () => {
             res.json({result: "success"});
-        });*/
+        });
 });
+
+app.get('/article',(req,res)=>{
+    connection.query("SELECT * FROM articles", (err,resultSet)=>{
+        if(resultSet.length){
+            res.json(resultSet);
+        }else{
+            res.json({});
+        }
+    })
+})
+app.get('/article/:id', Blog.getArticleById)
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 })
