@@ -8,30 +8,20 @@ import {engine} from 'express-handlebars';
 import {v4} from 'uuid';
 import path from "path";
 import fs from 'fs';
-import {Blog} from 'controllers/Blog.js'
+import {Blog} from './controllers/Blog.js'
+import {connection} from "./dbHelper.js";
 const app = express()
-const port = 3000
+const port = 3001;
+const __dirname = path.resolve();
 app.use(cookieParser('secret key'))
-app.use(express.static(`/public`));
+app.use(express.static(`${__dirname}"/public"`));
 app.engine('handlebars', engine());
 app.set('views', './views')
 app.set('view engine', 'handlebars')
 
-const connection = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    database: "fullstack19",
-    password: ""
-});
 
 
 
-connection.connect(function (err) {
-    if (err) {
-        return console.error(err.message);
-    } else
-        console.log("success");
-});
 
 app.get('/', (req, res) => {
     res.render('home', { title: 'Greetings form Handlebars' })
@@ -131,15 +121,7 @@ app.post('/addArticle', multer().fields([]), (req, res)=> {
         });
 });
 
-app.get('/article',(req,res)=>{
-    connection.query("SELECT * FROM articles", (err,resultSet)=>{
-        if(resultSet.length){
-            res.json(resultSet);
-        }else{
-            res.json({});
-        }
-    })
-})
+app.get('/article', Blog.getArticles);
 app.get('/article/:id', Blog.getArticleById)
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
