@@ -6,6 +6,7 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {Posts} from "./components/Posts";
 import {Footer} from "./components/Footer";
 import {SinglePost} from "./components/SinglePost";
+import {Login} from "./components/Login";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Routes>
               <Route path="/" element={<Posts/>}/>
               <Route path="/article/:id" element={<SinglePost/>}/>
+              <Route path={"/login"} element={<Login/>}/>
           </Routes>
           <Footer/>
       </BrowserRouter>

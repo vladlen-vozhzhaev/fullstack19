@@ -16,9 +16,13 @@ function Post(props){
     )
 }
 
+function AddPostBtn(){
+    return (<Link to="/addPost">Добавить статью</Link>)
+}
 
 export function Posts(){
     const [posts, setPosts] = useState([]);
+    const [addPostBtn, setAddPostBtn] = useState([]);
     useEffect(()=>{
         fetch('/article')
             .then(respone=>respone.json())
@@ -26,10 +30,20 @@ export function Posts(){
                 setPosts(result.map(item=><Post key={item.id} title={item.title} id={item.id}/>));
             });
     }, []);
+    useEffect(()=>{
+        fetch('/userData')
+            .then(response=>response.json())
+            .then(result=>{
+                if(result.result !== "error"){
+                    setAddPostBtn([<AddPostBtn/>])
+                }
+            })
+    }, [])
 
     return (
         <div className="row gx-4 gx-lg-5 justify-content-center">
             <div className="col-md-10 col-lg-8 col-xl-7">
+                {addPostBtn}
                 {posts}
                 <hr className="my-4"/>
 

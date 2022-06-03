@@ -10,11 +10,12 @@ import path from "path";
 import fs from 'fs';
 import {Blog} from './controllers/Blog.js'
 import {connection} from "./dbHelper.js";
+import {User} from "./controllers/User.js";
 const app = express()
 const port = 3001;
 const __dirname = path.resolve();
 app.use(cookieParser('secret key'))
-app.use(express.static(`${__dirname}"/public"`));
+app.use(express.static(`${__dirname}/public`));
 app.engine('handlebars', engine());
 app.set('views', './views')
 app.set('view engine', 'handlebars')
@@ -26,6 +27,7 @@ app.set('view engine', 'handlebars')
 app.get('/', (req, res) => {
     res.render('home', { title: 'Greetings form Handlebars' })
 });
+app.get('/UserData', User.getUserData);
 app.get('/cabinet', (req, res) => {
     console.log('Cookie: ', req.cookies['token']);
     let token = req.cookies['token']==null?undefined:req.cookies['token'];
@@ -72,32 +74,8 @@ app.post('/reg', multer().fields([]), (req, res)=>{
     });
 
 })
-app.post('/login', multer().fields([]), (req,res )=>{
-    let email = req.body.email.toLowerCase();
-    connection.query("SELECT * FROM users WHERE email=?", [email], function (err, res1){
-        console.log(res1);
-        if(res1.length){
-            let pass = (HmacSHA256(req.body.pass, 'secret').toString());
-            if(pass === res1[0].pass){
-                let uid = uuid.v4();
-                connection.query("UPDATE users SET token = ? WHERE id = ?",
-                    [uid, res1[0].id]);
-                res.cookie('token', uid);
-                res.send("success");
-            }else {
-                res.send("error");
-            }
-        }
-        else{
-            res.send("error");
-        }
-    });
-});
-
-app.get('/logout', (req, res)=>{
-    res.clearCookie('token');
-    res.send('success');
-});
+app.post('/login', multer().fields([]), User.login);
+app.get('/logout', User.logout);
 
 app.get('/addArticle', (req, res)=>{
     res.render('addArticle', {});
@@ -110,7 +88,7 @@ app.post('/addArticle', multer().fields([]), (req, res)=> {
         let base64 = image.getAttribute('src');
         let imageName = Date.now()+"."+base64.split(",")[0].split("/")[1].split(";")[0];
         let buff = new Buffer(base64.split(",")[1], 'base64');
-        fs.writeFileSync(`public/img/contentImage/${imageName}`, buff);
+        fs.writeFileSync(`client/public/img/contentImage/${imageName}`, buff);
         root.querySelectorAll("img")[index].setAttribute("src", `/img/contentImage/${imageName}`);
     })
     console.log(root.toString());
