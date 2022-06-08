@@ -10,6 +10,7 @@ export class SinglePost extends React.Component{
             .then(response=>response.json())
             .then(result=>{
                 console.log(result);
+                document.getElementById("h1Title").innerText = result.title;
                 this.setState({
                     content: result.content
                 })

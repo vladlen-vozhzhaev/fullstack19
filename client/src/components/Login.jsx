@@ -1,6 +1,8 @@
 import { useForm } from "react-hook-form";
+import {useNavigate} from "react-router-dom";
 export function Login(props){
     const { register, handleSubmit } = useForm();
+    const navigate = useNavigate();
     const onSubmit = data =>{
         console.log(data);
         const formData = new FormData();
@@ -11,7 +13,9 @@ export function Login(props){
             body: formData
         }).then(response=>response.json())
             .then(result=>{
-                console.log(result);
+                if(result.result === 'success'){
+                    navigate('/');
+                }
             })
     }
     return (

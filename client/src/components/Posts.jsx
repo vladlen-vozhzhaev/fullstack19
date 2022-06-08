@@ -24,6 +24,7 @@ export function Posts(){
     const [posts, setPosts] = useState([]);
     const [addPostBtn, setAddPostBtn] = useState([]);
     useEffect(()=>{
+        document.getElementById("h1Title").innerText = "Главная";
         fetch('/article')
             .then(respone=>respone.json())
             .then(result=>{

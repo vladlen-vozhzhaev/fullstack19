@@ -12,7 +12,7 @@ import {Blog} from './controllers/Blog.js'
 import {connection} from "./dbHelper.js";
 import {User} from "./controllers/User.js";
 const app = express()
-const port = 3001;
+const port = 3000;
 const __dirname = path.resolve();
 app.use(cookieParser('secret key'))
 app.use(express.static(`${__dirname}/public`));
@@ -77,27 +77,7 @@ app.post('/reg', multer().fields([]), (req, res)=>{
 app.post('/login', multer().fields([]), User.login);
 app.get('/logout', User.logout);
 
-app.get('/addArticle', (req, res)=>{
-    res.render('addArticle', {});
-});
-
-app.post('/addArticle', multer().fields([]), (req, res)=> {
-    const root = parse(req.body.content);
-    let images = root.querySelectorAll("img");
-    images.forEach((image, index)=>{
-        let base64 = image.getAttribute('src');
-        let imageName = Date.now()+"."+base64.split(",")[0].split("/")[1].split(";")[0];
-        let buff = new Buffer(base64.split(",")[1], 'base64');
-        fs.writeFileSync(`client/public/img/contentImage/${imageName}`, buff);
-        root.querySelectorAll("img")[index].setAttribute("src", `/img/contentImage/${imageName}`);
-    })
-    console.log(root.toString());
-    connection.query("INSERT INTO articles (title, content, author) VALUES (?,?,?)",
-        [req.body.title, root.toString(), req.body.author],
-        () => {
-            res.json({result: "success"});
-        });
-});
+app.post('/addArticle', multer().fields([]), Blog.addArticle);
 
 app.get('/article', Blog.getArticles);
 app.get('/article/:id', Blog.getArticleById)

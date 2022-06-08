@@ -7,16 +7,17 @@ import {Posts} from "./components/Posts";
 import {Footer} from "./components/Footer";
 import {SinglePost} from "./components/SinglePost";
 import {Login} from "./components/Login";
-
+import {AddPost} from "./components/AddPost";
 function App() {
   return (
       <BrowserRouter>
           <Menu/>
-          <Header/>
+          <Header title={"Главная страница"}/>
           <Routes>
               <Route path="/" element={<Posts/>}/>
               <Route path="/article/:id" element={<SinglePost/>}/>
               <Route path={"/login"} element={<Login/>}/>
+              <Route path={"/addPost"} element={<AddPost/>}/>
           </Routes>
           <Footer/>
       </BrowserRouter>
